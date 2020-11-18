@@ -8,7 +8,7 @@
 
 import UIKit
 import RealmSwift
-//import chame
+import ChameleonFramework
 
 class CategoriesListController: SwipeTableViewController {
 
@@ -31,6 +31,7 @@ class CategoriesListController: SwipeTableViewController {
             if let title = textField.text {
                 let newItem = TodoCategory()
                 newItem.title = title
+                newItem.color = UIColor.randomFlat().hexValue()
                 self.saveItem(newItem)
                 self.tableView.reloadData()
             }
@@ -78,12 +79,16 @@ class CategoriesListController: SwipeTableViewController {
 extension CategoriesListController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        cell.textLabel?.text = categories[indexPath.row].title
+        let category = categories[indexPath.row]
+        cell.textLabel?.text = category.title
+        let newBgColor = UIColor(hexString: category.color)
+        cell.textLabel?.textColor = ContrastColorOf(newBgColor ?? .white, returnFlat: true)
+        cell.backgroundColor = newBgColor
         return cell
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories.count
+        return categories?.count ?? 0
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

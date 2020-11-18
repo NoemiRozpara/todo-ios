@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import RealmSwift
+import ChameleonFramework
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -18,18 +19,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         do {
             let config = Realm.Configuration(
-                schemaVersion: 2,
+                schemaVersion: 3,
 
                 // Set the block which will be called automatically when opening a Realm with
                 // a schema version lower than the one set above
                 migrationBlock: { migration, oldSchemaVersion in
                     // We haven’t migrated anything yet, so oldSchemaVersion == 0
-                    if (oldSchemaVersion < 2) {
+                    if (oldSchemaVersion < 3) {
                         migration.enumerateObjects(ofType: TodoItem.className()) { _, newObject in
-                            // combine name fields into a single field
-//                            let firstName = oldObject!["firstName"] as! String
-//                            let lastName = oldObject!["lastName"] as! String
                             newObject?["createdAt"] = Date()
+                        }
+                        migration.enumerateObjects(ofType: TodoCategory.className()) { _, newObject in
+                            newObject?["color"] = UIColor.randomFlat().hexValue()
                         }
                     }
                 })
