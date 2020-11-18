@@ -8,13 +8,45 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        do {
+            let config = Realm.Configuration(
+                schemaVersion: 2,
 
+                // Set the block which will be called automatically when opening a Realm with
+                // a schema version lower than the one set above
+                migrationBlock: { migration, oldSchemaVersion in
+                    // We haven’t migrated anything yet, so oldSchemaVersion == 0
+                    if (oldSchemaVersion < 2) {
+                        migration.enumerateObjects(ofType: TodoItem.className()) { _, newObject in
+                            // combine name fields into a single field
+//                            let firstName = oldObject!["firstName"] as! String
+//                            let lastName = oldObject!["lastName"] as! String
+                            newObject?["createdAt"] = Date()
+                        }
+                    }
+                })
+
+            // Tell Realm to use this new configuration object for the default Realm
+            Realm.Configuration.defaultConfiguration = config
+
+            // Now that we've told Realm how to handle the schema change, opening the file
+            // will automatically perform the migration
+            let realm = try Realm()
+            print(realm.configuration.fileURL)
+        } catch let e {
+            print(e)
+        }
+        return true
+    }
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true

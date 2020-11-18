@@ -7,17 +7,17 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
+//import chame
 
-class CategoriesListController: UITableViewController {
+class CategoriesListController: SwipeTableViewController {
 
-    var categories: [TodoCategory] = []
-    
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var categories: Results<TodoCategory>!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        tableView.rowHeight = 80
     }
     
     
@@ -29,10 +29,9 @@ class CategoriesListController: UITableViewController {
         }
         let add = UIAlertAction(title: "Add", style: .default) { (action) in
             if let title = textField.text {
-                let newItem = TodoCategory(context: self.context)
+                let newItem = TodoCategory()
                 newItem.title = title
-                self.categories.append(newItem)
-                self.saveItems()
+                self.saveItem(newItem)
                 self.tableView.reloadData()
             }
         }
@@ -45,28 +44,42 @@ class CategoriesListController: UITableViewController {
     }
     
     func loadCategories() {
-        let request: NSFetchRequest<TodoCategory> = TodoCategory.fetchRequest()
         do {
-            categories = try context.fetch(request)
+            try categories = Realm().objects(TodoCategory.self)
+        } catch let e {
+            print(e)
+        }  
+    }
+    
+    func saveItem(_ category: TodoCategory) {
+        do {
+            try Realm().write({
+                try Realm().add(category)
+            })
         } catch let e {
             print(e)
         }
     }
     
-    func saveItems() {
-        do {
-            try context.save()
-        } catch let e {
-            print(e)
+    override func deleteItem(at indexPath: IndexPath) {
+        super.deleteItem(at: indexPath)
+        if let rowToDelete = self.categories?[indexPath.row] {
+            do {
+                try Realm().write({
+                    try Realm().delete(rowToDelete)
+                })
+            } catch {
+                print(error)
+            }
         }
     }
 }
 
 extension CategoriesListController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell")
-        cell?.textLabel?.text = categories[indexPath.row].title
-        return cell!
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        cell.textLabel?.text = categories[indexPath.row].title
+        return cell
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
